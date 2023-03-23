@@ -14,16 +14,21 @@ WITH fieldData AS (
       , 'ISSN'
     )
 ),
-WITH aggCreators AS (
+aggCreators AS (
     SELECT 
-        ic.itemID
-      , GROUP_CONCAT(c.firstName || ' ' || c.lastName, '|') value
-    FROM itemCreators ic
-    JOIN creators c ON c.creatorID = ic.creatorID
-    ORDER BY ic.orderIndex
-    GROUP BY ic.itemID
+        t.itemID
+      , GROUP_CONCAT(t.name, '|') AS value
+    FROM (
+        SELECT
+            ic.itemID
+            , c.firstName || ' ' || c.lastName AS name
+        FROM itemCreators ic
+        JOIN creators c ON c.creatorID = ic.creatorID
+        ORDER BY ic.orderIndex
+    ) AS t
+    GROUP BY t.itemID
 ),
-WITH rsc AS (
+rsc AS (
     SELECT
         items.key
       , items.dateAdded date_added
@@ -35,12 +40,13 @@ WITH rsc AS (
       , authors.value
       , SUBSTRING(year.value, 1, 4)
     FROM items 
-    JOIN fieldData title ON title.itemID = items.itemID AND title.fieldName = 'title'
-    JOIN fieldData doi ON doi.itemID = items.itemID AND doi.fieldName = 'DOI'
-    JOIN fieldData issn ON issn.itemID = items.itemID AND issn.fieldName = 'ISSN'
-    JOIN fieldData isbn ON isbn.itemID = items.itemID AND isbn.fieldName = 'ISBN'
-    JOIN fieldData url ON url.itemID = items.itemID AND url.fieldName = 'url'
-    JOIN fieldData year ON year.itemID = items.itemID AND year.fieldName = 'date'
-    JOIN aggCreators authors ON authors.itemID = items.itemID
+    LEFT JOIN fieldData title ON title.itemID = items.itemID AND title.fieldName = 'title'
+    LEFT JOIN fieldData doi ON doi.itemID = items.itemID AND doi.fieldName = 'DOI'
+    LEFT JOIN fieldData issn ON issn.itemID = items.itemID AND issn.fieldName = 'ISSN'
+    LEFT JOIN fieldData isbn ON isbn.itemID = items.itemID AND isbn.fieldName = 'ISBN'
+    LEFT JOIN fieldData url ON url.itemID = items.itemID AND url.fieldName = 'url'
+    LEFT JOIN fieldData year ON year.itemID = items.itemID AND year.fieldName = 'date'
+    LEFT JOIN aggCreators authors ON authors.itemID = items.itemID
 )
-SELECT * FROM rsc WHERE key = '4MMA8B7E'
+/* SELECT * FROM rsc WHERE key = '4MMA8B7E'; */
+SELECT * FROM rsc LIMIT 20;
